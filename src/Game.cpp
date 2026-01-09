@@ -73,8 +73,9 @@ bool Game::Initialize() {
         return false;
     }
     
-    // Initialize player
-    m_player.SetPosition(glm::vec3(0.0f, 0.5f, 0.0f));
+    // Initialize player at a safe position (not on a wall)
+    // Avoid z=0 (horizontal wall) and x=±5 (vertical walls)
+    m_player.SetPosition(glm::vec3(0.0f, 0.5f, 2.0f));
     
     // OpenGL settings
     glEnable(GL_DEPTH_TEST);
@@ -105,18 +106,47 @@ void Game::ProcessInput(const float& deltaTime) {
         glfwSetWindowShouldClose(m_window, true);
     }
     
-    // Player movement
+    const float collisionRadius = 0.5f;
+    glm::vec3 currentPos = m_player.GetPosition();
+    
+    // Player movement - check collision before each movement
     if (glfwGetKey(m_window, GLFW_KEY_W) == GLFW_PRESS) {
-        m_player.MoveForward(deltaTime);
+        // Calculate where we would move to
+        float yawRad = glm::radians(m_player.GetYaw());
+        glm::vec3 direction(cos(yawRad), 0.0f, sin(yawRad));
+        glm::vec3 newPos = currentPos + direction * m_player.GetSpeed() * deltaTime;
+        
+        // Only move if new position doesn't collide
+        if (!m_level.CheckCollision(newPos, collisionRadius)) {
+            m_player.MoveForward(deltaTime);
+        }
     }
     if (glfwGetKey(m_window, GLFW_KEY_S) == GLFW_PRESS) {
-        m_player.MoveBackward(deltaTime);
+        float yawRad = glm::radians(m_player.GetYaw());
+        glm::vec3 direction(cos(yawRad), 0.0f, sin(yawRad));
+        glm::vec3 newPos = currentPos - direction * m_player.GetSpeed() * deltaTime;
+        
+        if (!m_level.CheckCollision(newPos, collisionRadius)) {
+            m_player.MoveBackward(deltaTime);
+        }
     }
     if (glfwGetKey(m_window, GLFW_KEY_A) == GLFW_PRESS) {
-        m_player.MoveLeft(deltaTime);
+        float yawRad = glm::radians(m_player.GetYaw());
+        glm::vec3 direction(-sin(yawRad), 0.0f, cos(yawRad));
+        glm::vec3 newPos = currentPos - direction * m_player.GetSpeed() * deltaTime;
+        
+        if (!m_level.CheckCollision(newPos, collisionRadius)) {
+            m_player.MoveLeft(deltaTime);
+        }
     }
     if (glfwGetKey(m_window, GLFW_KEY_D) == GLFW_PRESS) {
-        m_player.MoveRight(deltaTime);
+        float yawRad = glm::radians(m_player.GetYaw());
+        glm::vec3 direction(-sin(yawRad), 0.0f, cos(yawRad));
+        glm::vec3 newPos = currentPos + direction * m_player.GetSpeed() * deltaTime;
+        
+        if (!m_level.CheckCollision(newPos, collisionRadius)) {
+            m_player.MoveRight(deltaTime);
+        }
     }
     
     // Shooting
@@ -127,12 +157,6 @@ void Game::ProcessInput(const float& deltaTime) {
 
 void Game::Update(const float& deltaTime) {
     m_player.Update(deltaTime);
-    
-    // Check collision and revert position if needed
-    glm::vec3 newPos = m_player.GetPosition();
-    if (m_level.CheckCollision(newPos, 0.3f)) {
-        m_player.SetPosition(m_player.GetPreviousPosition());
-    }
     
     m_camera.SetPosition(m_player.GetPosition());
     m_camera.SetYaw(m_player.GetYaw());

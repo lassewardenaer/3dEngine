@@ -21,6 +21,7 @@ public:
     
     float GetYaw() const { return m_yaw; }
     float GetPitch() const { return m_pitch; }
+    float GetSpeed() const { return m_speed; }
     
     bool IsShooting() const { return m_shooting; }
     void SetShooting(bool shooting) { m_shooting = shooting; }

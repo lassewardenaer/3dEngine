@@ -56,19 +56,34 @@ void Level::CreateFloor() {
 }
 
 bool Level::CheckCollision(const glm::vec3& position, float radius) const {
+    // Project position to XZ plane (y=0) for horizontal collision detection
+    glm::vec2 pos2D(position.x, position.z);
+    
     for (const auto& wall : m_walls) {
-        glm::vec3 wallDir = wall.end - wall.start;
-        float wallLength = glm::length(wallDir);
-        glm::vec3 wallNormal = glm::normalize(wallDir);
+        // Project wall to XZ plane
+        glm::vec2 wallStart(wall.start.x, wall.start.z);
+        glm::vec2 wallEnd(wall.end.x, wall.end.z);
         
-        glm::vec3 toPlayer = position - wall.start;
+        glm::vec2 wallDir = wallEnd - wallStart;
+        float wallLength = glm::length(wallDir);
+        
+        // Skip zero-length walls
+        if (wallLength < 0.001f) continue;
+        
+        glm::vec2 wallNormal = glm::normalize(wallDir);
+        
+        glm::vec2 toPlayer = pos2D - wallStart;
         float projection = glm::dot(toPlayer, wallNormal);
         
+        // Clamp projection to wall segment
         if (projection < 0) projection = 0;
         if (projection > wallLength) projection = wallLength;
         
-        glm::vec3 closestPoint = wall.start + wallNormal * projection;
-        float distance = glm::length(position - closestPoint);
+        // Find closest point on wall segment
+        glm::vec2 closestPoint = wallStart + wallNormal * projection;
+        
+        // Calculate 2D distance (ignoring Y coordinate)
+        float distance = glm::length(pos2D - closestPoint);
         
         if (distance < radius) {
             return true;

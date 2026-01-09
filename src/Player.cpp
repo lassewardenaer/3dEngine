@@ -5,8 +5,8 @@
 #include <cmath>
 
 Player::Player()
-    : m_position(0.0f, 0.5f, 0.0f)
-    , m_previousPosition(0.0f, 0.5f, 0.0f)
+    : m_position(0.0f, 0.5f, 2.0f)
+    , m_previousPosition(0.0f, 0.5f, 2.0f)
     , m_yaw(-90.0f)
     , m_pitch(0.0f)
     , m_speed(5.0f)
