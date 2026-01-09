@@ -1,4 +1,5 @@
 #include "Renderer.h"
+#include "Enemy.h"
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <iostream>
@@ -14,6 +15,9 @@ Renderer::Renderer()
     , m_skyVAO(0)
     , m_skyVBO(0)
     , m_skyEBO(0)
+    , m_bulletVAO(0)
+    , m_bulletVBO(0)
+    , m_bulletEBO(0)
     , m_initialized(false)
 {
 }
@@ -253,9 +257,39 @@ bool Renderer::Initialize() {
         return false;
     }
     
+    // Bullet shader
+    const char* bulletVertexShader = R"(
+        #version 330 core
+        layout (location = 0) in vec3 aPos;
+        
+        uniform mat4 model;
+        uniform mat4 view;
+        uniform mat4 projection;
+        
+        void main() {
+            gl_Position = projection * view * model * vec4(aPos, 1.0);
+        }
+    )";
+    
+    const char* bulletFragmentShader = R"(
+        #version 330 core
+        out vec4 FragColor;
+        
+        uniform vec3 color;
+        
+        void main() {
+            FragColor = vec4(color, 1.0);
+        }
+    )";
+    
+    if (!m_bulletShader.LoadFromSource(bulletVertexShader, bulletFragmentShader)) {
+        return false;
+    }
+    
     SetupWallRendering();
     SetupFloorRendering();
     SetupSkyRendering();
+    SetupBulletRendering();
     
     m_initialized = true;
     return true;
@@ -276,6 +310,12 @@ void Renderer::Shutdown() {
         glDeleteVertexArrays(1, &m_skyVAO);
         glDeleteBuffers(1, &m_skyVBO);
         glDeleteBuffers(1, &m_skyEBO);
+    }
+    
+    if (m_bulletVAO != 0) {
+        glDeleteVertexArrays(1, &m_bulletVAO);
+        glDeleteBuffers(1, &m_bulletVBO);
+        glDeleteBuffers(1, &m_bulletEBO);
     }
 }
 
@@ -355,6 +395,56 @@ void Renderer::SetupSkyRendering() {
     
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_skyEBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(skyIndices), skyIndices, GL_STATIC_DRAW);
+    
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+    
+    glBindVertexArray(0);
+}
+
+void Renderer::SetupBulletRendering() {
+    // Create a simple sphere for bullets (using a cube approximation)
+    // Simple cube vertices for a bullet
+    float bulletSize = 0.1f;
+    float bulletVertices[] = {
+        // Front face
+        -bulletSize, -bulletSize,  bulletSize,
+         bulletSize, -bulletSize,  bulletSize,
+         bulletSize,  bulletSize,  bulletSize,
+        -bulletSize,  bulletSize,  bulletSize,
+        // Back face
+        -bulletSize, -bulletSize, -bulletSize,
+         bulletSize, -bulletSize, -bulletSize,
+         bulletSize,  bulletSize, -bulletSize,
+        -bulletSize,  bulletSize, -bulletSize,
+    };
+    
+    unsigned int bulletIndices[] = {
+        // Front
+        0, 1, 2, 2, 3, 0,
+        // Back
+        4, 5, 6, 6, 7, 4,
+        // Top
+        3, 2, 6, 6, 7, 3,
+        // Bottom
+        0, 1, 5, 5, 4, 0,
+        // Right
+        1, 5, 6, 6, 2, 1,
+        // Left
+        0, 4, 7, 7, 3, 0,
+    };
+    
+    glGenVertexArrays(1, &m_bulletVAO);
+    glGenBuffers(1, &m_bulletVBO);
+    glGenBuffers(1, &m_bulletEBO);
+    
+    glBindVertexArray(m_bulletVAO);
+    
+    glBindBuffer(GL_ARRAY_BUFFER, m_bulletVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(bulletVertices), bulletVertices, GL_STATIC_DRAW);
+    
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_bulletEBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(bulletIndices), bulletIndices, GL_STATIC_DRAW);
     
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
@@ -451,9 +541,10 @@ void Renderer::RenderWall(const Wall& wall, const Camera& camera) {
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 }
 
-void Renderer::RenderPlayer(const Player& player, const Camera& camera) {
+void Renderer::RenderPlayer(const Player& player, const Camera& camera, float aspectRatio) {
     // Player rendering can be added here (weapon, crosshair, etc.)
-    // For now, this is a placeholder
+    // Render player bullets
+    RenderPlayerBullets(player, camera, aspectRatio);
 }
 
 void Renderer::RenderSky(const Camera& camera, float aspectRatio) {
@@ -492,6 +583,37 @@ void Renderer::RenderSky(const Camera& camera, float aspectRatio) {
     glDepthFunc(static_cast<GLenum>(depthFuncInt)); // Cast GLint to GLenum explicitly
     if (cullFaceEnabled) {
         glEnable(GL_CULL_FACE);
+    }
+}
+
+void Renderer::RenderBullet(const Bullet& bullet, const Camera& camera, float aspectRatio) {
+    m_bulletShader.Use();
+    
+    // Create model matrix for bullet
+    glm::mat4 model = glm::mat4(1.0f);
+    model = glm::translate(model, bullet.m_position);
+    model = glm::scale(model, glm::vec3(bullet.m_size));
+    
+    // Set uniforms
+    m_bulletShader.SetMat4("model", model);
+    m_bulletShader.SetMat4("view", camera.GetViewMatrix());
+    m_bulletShader.SetMat4("projection", camera.GetProjectionMatrix(aspectRatio));
+    m_bulletShader.SetVec3("color", bullet.m_color);
+    
+    glBindVertexArray(m_bulletVAO);
+    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0); // 6 faces * 2 triangles * 3 vertices
+    glBindVertexArray(0);
+}
+
+void Renderer::RenderPlayerBullets(const Player& player, const Camera& camera, float aspectRatio) {
+    for (const auto& bullet : player.GetBullets()) {
+        RenderBullet(bullet, camera, aspectRatio);
+    }
+}
+
+void Renderer::RenderEnemyBullets(const Enemy& enemy, const Camera& camera, float aspectRatio) {
+    for (const auto& bullet : enemy.GetBullets()) {
+        RenderBullet(bullet, camera, aspectRatio);
     }
 }
 

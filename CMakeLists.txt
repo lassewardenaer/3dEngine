@@ -63,6 +63,9 @@ set(SOURCES
     src/Player.cpp
     src/Renderer.cpp
     src/OsUtils.cpp
+    src/Bullet.cpp
+    src/Enemy.cpp
+    src/Character.cpp
     ${GLAD_SOURCE}
 )
 
@@ -111,6 +114,9 @@ set(TEST_SOURCES
     src/Player.cpp
     src/Level.cpp
     src/OsUtils.cpp
+    src/Bullet.cpp
+    src/Enemy.cpp
+    src/Character.cpp
 )
 
 # Test executable

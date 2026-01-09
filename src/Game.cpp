@@ -175,7 +175,7 @@ void Game::Render() {
     
     float aspectRatio = static_cast<float>(m_width) / static_cast<float>(m_height);
     m_renderer.RenderLevel(m_level, m_camera, aspectRatio);
-    m_renderer.RenderPlayer(m_player, m_camera);
+    m_renderer.RenderPlayer(m_player, m_camera, aspectRatio);
 }
 
 void Game::Shutdown() {
