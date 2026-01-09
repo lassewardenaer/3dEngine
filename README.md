@@ -84,6 +84,25 @@ make
 - **Space** - Shoot
 - **ESC** - Exit game
 
+## Testing
+
+The project includes unit tests using Google Test. To build and run tests:
+
+```bash
+cd build
+cmake ..
+make DoomLikeGameTests
+./DoomLikeGameTests
+```
+
+Or use CTest:
+```bash
+cd build
+ctest
+```
+
+See `tests/README.md` for more information about the test suite.
+
 ## Project Structure
 
 ```
@@ -96,6 +115,13 @@ openGLproject/
 │   ├── Camera.cpp/h       # Camera system
 │   ├── Player.cpp/h       # Player controller
 │   ├── Level.cpp/h        # Level/map system
+│   ├── Renderer.cpp/h     # Rendering system
+│   ├── Shader.cpp/h       # Shader management
+│   └── OsUtils.cpp/h      # OS utilities
+├── tests/                  # Unit tests
+│   ├── test_camera.cpp    # Camera tests
+│   ├── test_player.cpp    # Player tests
+│   └── test_level.cpp     # Level tests
 │   ├── Renderer.cpp/h     # Rendering system
 │   └── Shader.cpp/h       # Shader management
 └── third_party/           # External dependencies

@@ -93,3 +93,59 @@ target_include_directories(${PROJECT_NAME} PRIVATE
     ${CMAKE_SOURCE_DIR}/third_party/glfw/include
 )
 
+# Enable testing
+enable_testing()
+
+# Google Test
+include(FetchContent)
+FetchContent_Declare(
+    googletest
+    GIT_REPOSITORY https://github.com/google/googletest.git
+    GIT_TAG v1.14.0
+)
+FetchContent_MakeAvailable(googletest)
+
+# Test source files (without main.cpp and Game.cpp which require GLFW/OpenGL)
+set(TEST_SOURCES
+    src/Camera.cpp
+    src/Player.cpp
+    src/Level.cpp
+    src/OsUtils.cpp
+)
+
+# Test executable
+add_executable(DoomLikeGameTests
+    tests/test_camera.cpp
+    tests/test_player.cpp
+    tests/test_level.cpp
+    ${TEST_SOURCES}
+)
+
+# Link test libraries
+target_link_libraries(DoomLikeGameTests PRIVATE
+    GTest::gtest
+    GTest::gtest_main
+    GTest::gmock
+)
+
+# Include directories for tests
+target_include_directories(DoomLikeGameTests PRIVATE
+    ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR}/third_party/glad/include
+    ${GLM_INCLUDE_DIR}
+)
+
+# Link GLM if found via find_package
+if(glm_FOUND)
+    target_link_libraries(DoomLikeGameTests PRIVATE glm::glm)
+endif()
+
+# Link platform-specific frameworks (macOS) for OsUtils tests
+if(APPLE)
+    target_link_libraries(DoomLikeGameTests PRIVATE ${COREGRAPHICS_FRAMEWORK})
+endif()
+
+# Register tests with CTest
+include(GoogleTest)
+gtest_discover_tests(DoomLikeGameTests)
+
