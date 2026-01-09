@@ -93,7 +93,7 @@ void Character::Shoot(const float& deltaTime) {
         m_bullets.push_back(Bullet(bulletPosition, bulletVelocity, bulletLifetime));
         m_bullets.back().m_lifetime = bulletLifetime;
         m_bullets.back().m_color = glm::vec3(1.0f, 0.0f, 0.0f); // Red bullets
-        m_bullets.back().m_size = 0.2f; // Bullet size
+               m_bullets.back().m_size = 0.1f; // Bullet size (smaller ball)
     } else {
         m_shootTimer -= deltaTime;
     }

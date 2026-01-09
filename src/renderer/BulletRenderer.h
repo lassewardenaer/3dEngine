@@ -22,6 +22,7 @@ private:
     unsigned int m_VAO;
     unsigned int m_VBO;
     unsigned int m_EBO;
+    unsigned int m_indexCount;
     bool m_initialized;
 };
 
