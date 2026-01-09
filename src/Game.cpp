@@ -1,7 +1,7 @@
 #include "Game.h"
 #include <iostream>
 #include <cmath>
-#include "OsUtils.h"
+#include "util/OsUtils.h"
 
 Game::Game() 
     : m_window(nullptr)

@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include "Player.h"
+#include "gameNodes/characters/Player.h"
 #include <glm/gtc/epsilon.hpp>
 #include <cmath>
 

@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include "Level.h"
+#include "level/Level.h"
 #include <glm/gtc/epsilon.hpp>
 
 class LevelTest : public ::testing::Test {

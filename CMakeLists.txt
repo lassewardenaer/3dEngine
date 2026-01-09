@@ -53,19 +53,18 @@ else()
     message(FATAL_ERROR "GLAD source file (glad.c) not found! Please ensure it's in third_party/glad/src/ or src/")
 endif()
 
+# Add shader, renderer, gameNodes, level, and util as subdirectories (builds libraries)
+add_subdirectory(src/shader)
+add_subdirectory(src/renderer)
+add_subdirectory(src/gameNodes)
+add_subdirectory(src/level)
+add_subdirectory(src/util)
+
 # Source files
 set(SOURCES
     src/main.cpp
     src/Game.cpp
     src/Camera.cpp
-    src/Shader.cpp
-    src/Level.cpp
-    src/Player.cpp
-    src/Renderer.cpp
-    src/OsUtils.cpp
-    src/Bullet.cpp
-    src/Enemy.cpp
-    src/Character.cpp
     ${GLAD_SOURCE}
 )
 
@@ -73,26 +72,24 @@ set(SOURCES
 add_executable(${PROJECT_NAME} ${SOURCES})
 
 # Link libraries
+# shader is linked transitively through renderer (PUBLIC dependency)
+# GLM is linked transitively through gameNodes, level, renderer (PUBLIC dependencies)
 target_link_libraries(${PROJECT_NAME} PRIVATE
     OpenGL::GL
     glfw
+    renderer  # Includes shader transitively
+    gameNodes
+    level
+    util
 )
 
-# Link GLM if found via find_package
-if(glm_FOUND)
-    target_link_libraries(${PROJECT_NAME} PRIVATE glm::glm)
-endif()
-
-# Link platform-specific frameworks (macOS)
-if(APPLE)
-    find_library(COREGRAPHICS_FRAMEWORK CoreGraphics REQUIRED)
-    target_link_libraries(${PROJECT_NAME} PRIVATE ${COREGRAPHICS_FRAMEWORK})
-endif()
+# Note: CoreGraphics is linked through util library, no need to link here
 
 # Include directories
+# Most include directories are propagated through PUBLIC target_include_directories in libraries
+# Only include directories not covered by libraries need to be specified here
 target_include_directories(${PROJECT_NAME} PRIVATE
     ${CMAKE_SOURCE_DIR}/src
-    ${CMAKE_SOURCE_DIR}/third_party/glad/include
     ${CMAKE_SOURCE_DIR}/third_party/glfw/include
 )
 
@@ -111,12 +108,10 @@ FetchContent_MakeAvailable(googletest)
 # Test source files (without main.cpp and Game.cpp which require GLFW/OpenGL)
 set(TEST_SOURCES
     src/Camera.cpp
-    src/Player.cpp
-    src/Level.cpp
-    src/OsUtils.cpp
-    src/Bullet.cpp
-    src/Enemy.cpp
-    src/Character.cpp
+    src/gameNodes/characters/Player.cpp
+    src/gameNodes/weapons/Bullet.cpp
+    src/gameNodes/characters/Enemy.cpp
+    src/gameNodes/characters/Character.cpp
 )
 
 # Test executable
@@ -128,28 +123,26 @@ add_executable(DoomLikeGameTests
 )
 
 # Link test libraries
+# GLM is linked transitively through gameNodes, level (PUBLIC dependencies)
 target_link_libraries(DoomLikeGameTests PRIVATE
     GTest::gtest
     GTest::gtest_main
     GTest::gmock
+    gameNodes
+    level
+    util
 )
 
 # Include directories for tests
+# Most include directories are propagated through PUBLIC target_include_directories in libraries
 target_include_directories(DoomLikeGameTests PRIVATE
     ${CMAKE_SOURCE_DIR}/src
-    ${CMAKE_SOURCE_DIR}/third_party/glad/include
-    ${GLM_INCLUDE_DIR}
+    ${GLM_INCLUDE_DIR}  # Only needed if GLM not found via find_package
 )
 
-# Link GLM if found via find_package
-if(glm_FOUND)
-    target_link_libraries(DoomLikeGameTests PRIVATE glm::glm)
-endif()
+# GLM is linked transitively through gameNodes and level (PUBLIC dependencies)
 
-# Link platform-specific frameworks (macOS) for OsUtils tests
-if(APPLE)
-    target_link_libraries(DoomLikeGameTests PRIVATE ${COREGRAPHICS_FRAMEWORK})
-endif()
+# Note: CoreGraphics is linked through util library, no need to link here
 
 # Register tests with CTest
 include(GoogleTest)

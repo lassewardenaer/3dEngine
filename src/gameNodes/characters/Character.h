@@ -3,7 +3,7 @@
 
 #include <glm/glm.hpp>
 #include <vector>
-#include "Bullet.h"
+#include "weapons/Bullet.h"
 
 class Character {
 public:

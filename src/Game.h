@@ -4,9 +4,9 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include "Camera.h"
-#include "Level.h"
-#include "Player.h"
-#include "Renderer.h"
+#include "level/Level.h"
+#include "gameNodes/characters/Player.h"
+#include "renderer/Renderer.h"
 
 class Game {
 public:

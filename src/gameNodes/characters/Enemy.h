@@ -2,6 +2,7 @@
 #ifndef ENEMY_H
 #define ENEMY_H
 
+#include <glm/glm.hpp>
 #include "Character.h"
 
 class Enemy : public Character {
@@ -12,3 +13,4 @@ public:
 };
 
 #endif
+

@@ -16,3 +16,4 @@ Enemy::Enemy(const glm::vec3& position) : Character() {
 Enemy::~Enemy() {
     // Destructor
 }
+
